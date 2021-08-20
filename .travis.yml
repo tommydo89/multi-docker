@@ -1,0 +1,31 @@
+sudo: required
+services: # require docker service
+  - docker
+
+before_install: # install all of the dependencies needed to run tests on the client
+  - docker build -t tommydo/react-test -f ./client/Dockerfile.dev ./client 
+
+# execute npm test against the container we built in the previous step
+# appending '-- --coverage' will make sure the test ends and returns or else it'll hang
+script: 
+  - docker run tommydo/react-test npm test -- --coverage
+
+# after the tests successfully run, we build the production docker images
+# for all of the sub apps. No need to use -f this time around since the name of 
+# the docker file is the standard 'Dockerfile'
+after_success:
+  - docker build -t tommydo/multi-client ./client
+  - docker build -t tommydo/multi-nginx ./nginx 
+  - docker build -t tommydo/multi-server ./server
+  - docker build -t tommydo/multi-worker ./worker
+
+  # Log in to the docker CLI
+  # the echo command will emit the password to stdin of the next command which is the login command
+  # the flag --password-stdin tells the login command that it should expect to receive the pw via stdin
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub 
+  - docker push tommydo/multi-client
+  - docker push tommydo/multi-nginx
+  - docker push tommydo/multi-server
+  - docker push tommydo/multi-worker
+  
