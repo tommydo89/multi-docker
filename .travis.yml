@@ -8,7 +8,7 @@ before_install: # install all of the dependencies needed to run tests on the cli
 # execute npm test against the container we built in the previous step
 # appending '-- --coverage' will make sure the test ends and returns or else it'll hang
 script: 
-  - docker run tommydo/react-test npm test -- --coverage
+  - docker run -e CI=true tommydo/react-test npm test
 
 # after the tests successfully run, we build the production docker images
 # for all of the sub apps. No need to use -f this time around since the name of 
@@ -28,4 +28,3 @@ after_success:
   - docker push tommydo/multi-nginx
   - docker push tommydo/multi-server
   - docker push tommydo/multi-worker
-  
